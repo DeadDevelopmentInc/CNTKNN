@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace CNTKNN.Models
 {
+    [Obsolete]
     public class MFCC
     {
         public const int BlockLength = 2048;
