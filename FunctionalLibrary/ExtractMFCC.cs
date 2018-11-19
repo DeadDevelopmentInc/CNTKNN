@@ -1,29 +1,124 @@
 ﻿using MathNet.Numerics.IntegralTransforms;
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
 
-namespace CNTKNN.Models
+namespace FunctionalLibrary
 {
-    [Obsolete]
-    public class MFCC
+    public static class ExtractMFCC
     {
         public const int BlockLength = 2048;
-        public double[] Frame;                                                          //один фрейм
-        public double[,] FrameMass;                                                     //массив всех фреймов по BlockLength отсчетов или 128 (for 16khz) мс        
-        public Complex[,] FrameMassFft;                                                 //массив результатов FFT для всех фреймов
-
-        readonly int[] _filterPoints = {6,18,31,46,63,82,103,127,154,184,218,
+        public static double[] Frame;                                                          //один фрейм
+        public static double[,] FrameMass;                                                     //массив всех фреймов по BlockLength отсчетов или 128 (for 16khz) мс        
+        public static Complex[,] FrameMassFft;                                                 //массив результатов FFT для всех фреймов
+        public static int countFramesMax = 0;
+        static readonly int[] _filterPoints = {6,18,31,46,63,82,103,127,154,184,218,
                               257,299,348,402,463,531,608,695,792,901,1023};            //массив опорных точек для фильтрации спекрта фрейма
 
-        readonly double[,] _h = new double[20, BlockLength / 2];                        //массив из 20-ти фильтров для каждого MFCC
+        static readonly double[,] _h = new double[20, BlockLength / 2];                        //массив из 20-ти фильтров для каждого MFCC
 
-        public double[,] MFCC_20_calculation(double[] wavPcm)
+        public static bool ReadWav(string filename, out double[] L, out double[] R)
+        {
+            L = R = null;
+            //float [] left = new float[1];
+
+            //float [] right;
+            try
+            {
+                using (FileStream fs = File.Open(filename, FileMode.Open))
+                {
+                    BinaryReader reader = new BinaryReader(fs);
+
+                    // chunk 0
+                    int chunkID = reader.ReadInt32();
+                    int fileSize = reader.ReadInt32();
+                    int riffType = reader.ReadInt32();
+
+
+                    // chunk 1
+                    int fmtID = reader.ReadInt32();
+                    int fmtSize = reader.ReadInt32(); // bytes for this chunk
+                    int fmtCode = reader.ReadInt16();
+                    int channels = reader.ReadInt16();
+                    int sampleRate = reader.ReadInt32();
+                    int byteRate = reader.ReadInt32();
+                    int fmtBlockAlign = reader.ReadInt16();
+                    int bitDepth = reader.ReadInt16();
+
+                    if (fmtSize == 18)
+                    {
+                        // Read any extra values
+                        int fmtExtraSize = reader.ReadInt16();
+                        reader.ReadBytes(fmtExtraSize);
+                    }
+
+                    // chunk 2
+                    int dataID = reader.ReadInt32();
+                    int bytes = reader.ReadInt32();
+
+                    // DATA!
+                    byte[] byteArray = reader.ReadBytes(bytes);
+
+                    int bytesForSamp = bitDepth / 8;
+                    int samps = bytes / bytesForSamp;
+
+
+                    double[] asFloat = null;
+                    switch (bitDepth)
+                    {
+                        case 64:
+                            double[]
+                            asDouble = new double[samps];
+                            Buffer.BlockCopy(byteArray, 0, asDouble, 0, bytes);
+                            asFloat = Array.ConvertAll(asDouble, e => (double)e);
+                            break;
+                        case 32:
+                            asFloat = new double[samps];
+                            Buffer.BlockCopy(byteArray, 0, asFloat, 0, bytes);
+                            break;
+                        case 16:
+                            Int16[]
+                            asInt16 = new Int16[samps];
+                            Buffer.BlockCopy(byteArray, 0, asInt16, 0, bytes);
+                            asFloat = Array.ConvertAll(asInt16, e => e / (double)Int16.MaxValue);
+                            break;
+                        default:
+                            return false;
+                    }
+                    switch (channels)
+                    {
+                        case 1:
+                            L = asFloat;
+                            R = null;
+                            return true;
+                        case 2:
+                            L = new double[samps];
+                            R = new double[samps];
+                            for (int i = 0, s = 0; i < samps; i++)
+                            {
+                                L[i] = asFloat[s++];
+                                R[i] = asFloat[s++];
+                            }
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static double[,] MFCC_20_calculation(double[] wavPcm)
         {
             int countFrames = (wavPcm.Length * 2 / BlockLength) + 1; //количество отрезков в сигнале
-
+            if(countFrames > countFramesMax)
+            {
+                countFramesMax = countFrames;
+            }
             // RMS_gate(wavPcm);          //применение noise gate
             Normalize(wavPcm); //нормализация
             FrameMass = SplitToFrames(wavPcm); //формирование массива фреймов
@@ -70,7 +165,7 @@ namespace CNTKNN.Models
         /// Функция для подавления шума по среднекравратичному уровню
         /// </summary>
         /// <param name="wavPcm">Массив значений амплитуд аудиосигнала</param>
-        private void RMS_gate(double[] wavPcm)
+        private static void RMS_gate(double[] wavPcm)
         {
             int k = 0;
             double rms = 0;
@@ -95,7 +190,7 @@ namespace CNTKNN.Models
         /// Функция нормализации сигнала
         /// </summary>
         /// <param name="wavPcm">Массив значений амплитуд аудиосигнала</param>
-        private void Normalize(double[] wavPcm)
+        private static void Normalize(double[] wavPcm)
         {
             double[] absWavBuf = new double[wavPcm.Length];
             for (int i = 0; i < wavPcm.Length; i++)
@@ -114,7 +209,7 @@ namespace CNTKNN.Models
         /// При этом начало каждого следующего отрезка делит предыдущий пополам
         /// </summary>
         /// <param name="wavPcm">Массив значений амплитуд аудиосигнала</param>
-        private double[,] SplitToFrames(double[] wavPcm)
+        private static double[,] SplitToFrames(double[] wavPcm)
         {
             int countFrames = 0;
             int countSamp = 0;
@@ -155,7 +250,7 @@ namespace CNTKNN.Models
         /// </summary>
         /// <param name="frames">Двумерный массив отрезвов аудиосигнала</param>
         /// <param name="wav_PCM">Массив значений амплитуд аудиосигнала</param>
-        private Complex[,] CalculateFramesFFT(double[,] frames)
+        private static Complex[,] CalculateFramesFFT(double[,] frames)
         {
             var frameMassComplex = new Complex[frames.GetLength(0), BlockLength]; //для хранения результатов FFT каждого фрейма в комплексном виде
 

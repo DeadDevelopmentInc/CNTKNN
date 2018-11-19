@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CNTK.GPU" Version="2.6.0" />
+    <PackageReference Include="MathNet.Numerics" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Accord">
+      <HintPath>..\..\keras-sharp\Sources\bin\x64\Debug\net462\Accord.dll</HintPath>
+    </Reference>
+    <Reference Include="Accord.Math">
+      <HintPath>..\..\keras-sharp\Sources\bin\x64\Debug\net462\Accord.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="Accord.Math.Core">
+      <HintPath>..\..\keras-sharp\Sources\bin\x64\Debug\net462\Accord.Math.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Accord.Statistics">
+      <HintPath>..\..\keras-sharp\Sources\bin\x64\Debug\net462\Accord.Statistics.dll</HintPath>
+    </Reference>
+    <Reference Include="KerasSharp">
+      <HintPath>..\..\keras-sharp\Sources\bin\x64\Debug\net462\KerasSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ValueTuple">
+      <HintPath>..\..\keras-sharp\Sources\bin\x64\Debug\net462\System.ValueTuple.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
