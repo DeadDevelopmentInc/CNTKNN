@@ -2,11 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Accord.DataSets" Version="3.8.0" />
     <PackageReference Include="CNTK.GPU" Version="2.6.0" />
     <PackageReference Include="MathNet.Numerics" Version="4.7.0" />
+    <PackageReference Include="SiaNet.CPUOnly" Version="0.3.0" />
   </ItemGroup>
 
   <ItemGroup>

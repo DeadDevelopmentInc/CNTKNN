@@ -2,11 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
     <Folder Include="wwwroot\" />
     <Folder Include="libs\" />
+    <Folder Include="UI\" />
   </ItemGroup>
 
   <ItemGroup>

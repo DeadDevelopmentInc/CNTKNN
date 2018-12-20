@@ -17,12 +17,15 @@ using KerasSharp.Models;
 using KerasSharp.Optimizers;
 
 
+using static KerasSharp.Backends.Current;
+
+
 namespace FunctionalLibrary
 {
     public class CNTKClassifier
     {
-        public string TrainPath = "";
-        public string ValidatePath = "";
+        public string TrainPath = "test";
+        public string ValidatePath = "test";
         public Sequential Model { get; set; } = new Sequential();
         public int?[] Input_Shape;
         public int num_Classes;
@@ -33,13 +36,14 @@ namespace FunctionalLibrary
 
         static CNTKClassifier()
         {
-            Current.Switch("KerasSharp.Backends.CNTKBackend");
+            Current.Switch("KerasSharp.Backends.CNTK.GPU");
         }
 
         public CNTKClassifier() { }
 
         public CNTKClassifier(string Train, string Validate)
         {
+            Current.Switch("KerasSharp.Backends.CNTK.GPU");
             Model.Add(new Dense(12, input_shape: Input_Shape, activation: new ReLU()));
             Model.Add(new Dense(8, activation: new ReLU()));
             Model.Add(new Dense(num_Classes, activation: new Sigmoid()));
